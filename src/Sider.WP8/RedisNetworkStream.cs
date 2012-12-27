@@ -18,14 +18,12 @@ namespace Sider
         private IPEndPoint mEndpoint;
         int mLastOperationCount = 0;
 
-        private const int DefaultTimeout = 60000;
-
         public RedisNetworkStream(Socket socket, string host, int port, int timeout)
         {
             this.mSocket = socket;
             var ipAddress = IPAddress.Parse(host);
             this.mEndpoint = new IPEndPoint(ipAddress, port);
-            this.mTimeout = timeout > 1000 ? timeout : RedisNetworkStream.DefaultTimeout;
+            this.mTimeout = timeout;
         }
 
         public void Connect()
@@ -36,7 +34,10 @@ namespace Sider
             args.Completed += socket_Connected;
             args.UserToken = new ManualResetEvent(false);
             this.mSocket.ConnectAsync(args);
-            ((ManualResetEvent)args.UserToken).WaitOne(this.mTimeout);
+            if (this.mTimeout > 0)
+                ((ManualResetEvent)args.UserToken).WaitOne(this.mTimeout);
+            else
+                ((ManualResetEvent)args.UserToken).WaitOne();
         }
 
         void socket_Connected(object sender, SocketAsyncEventArgs e)
@@ -63,11 +64,17 @@ namespace Sider
             args.UserToken = new ManualResetEvent(false);
 
             this.mSocket.ReceiveAsync(args);
-            if (((ManualResetEvent)args.UserToken).WaitOne(this.mTimeout))
-            {
-                return this.mLastOperationCount;
-            }
 
+            if (this.mTimeout > 0)
+            {
+                if (((ManualResetEvent)args.UserToken).WaitOne(this.mTimeout))
+                    return this.mLastOperationCount;
+            } 
+            else 
+            {
+                if (((ManualResetEvent)args.UserToken).WaitOne())
+                    return this.mLastOperationCount;
+            }
             return 0;
         }
 
@@ -92,7 +99,10 @@ namespace Sider
             args.Completed += write_Completed;
             args.UserToken = new ManualResetEvent(false);
             this.mSocket.SendAsync(args);
-            ((ManualResetEvent)args.UserToken).WaitOne(this.mTimeout);
+            if (this.mTimeout > 0)
+                ((ManualResetEvent)args.UserToken).WaitOne(this.mTimeout);
+            else
+                ((ManualResetEvent)args.UserToken).WaitOne();
         }
 
         void write_Completed(object sender, SocketAsyncEventArgs e)
