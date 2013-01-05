@@ -15,14 +15,13 @@ namespace Sider
     {
         Socket mSocket;
         private int mTimeout;
-        private IPEndPoint mEndpoint;
+        private DnsEndPoint mEndpoint;
         int mLastOperationCount = 0;
 
         public RedisNetworkStream(Socket socket, string host, int port, int timeout)
         {
             this.mSocket = socket;
-            var ipAddress = IPAddress.Parse(host);
-            this.mEndpoint = new IPEndPoint(ipAddress, port);
+            this.mEndpoint = new DnsEndPoint(host, port);
             this.mTimeout = timeout;
         }
 
