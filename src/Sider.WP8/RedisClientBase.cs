@@ -5,7 +5,6 @@ using System.IO;
 using System.Net.Sockets;
 using Sider.Executors;
 using System.Net;
-using System.Net.Sockets;
 
 namespace Sider
 {
